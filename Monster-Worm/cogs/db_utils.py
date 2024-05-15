@@ -54,3 +54,30 @@ def create_tables(con):
     except sqlite3.Error as e:
         logging.error(f"Error creating tables: {e}")
 
+def update_config(con, key: str, value: int):
+    """
+    Updates the config table of the database, As this bot is made for single server use only,
+    We use the id 0, to effectively update each attribute of the table independently.
+    """
+    try:
+        cur = con.cursor()
+
+        # Check if the record with id = 0 exists
+        cur.execute("SELECT id FROM config WHERE id = 0")
+        existing_record = cur.fetchone()
+
+        if existing_record:
+            # Update the existing record
+            query = f"UPDATE config SET {key} = ? WHERE id = 0"
+            cur.execute(query, (value,))
+        else:
+            # Insert a new record with id = 0
+            query = f"INSERT INTO config (id, {key}) VALUES (0, ?)"
+            cur.execute(query, (value,))
+
+        con.commit()
+        logging.info("Updated table config successfully.")
+        return True
+    except sqlite3.Error as e:
+        logging.error(f"Error updating table config: {e}")
+        return False
