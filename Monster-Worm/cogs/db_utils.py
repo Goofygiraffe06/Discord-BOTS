@@ -9,7 +9,8 @@ logging.getLogger("flask.app").setLevel(logging.ERROR)
 
 def db_init():
     """
-    Creates a new database file if it doesn't exists and then runs the create_tables function.
+    Creates a new database file if it doesn't exists and then runs the
+    create_tables function.
     """
     try:
         con = sqlite3.connect("bot.db")
@@ -42,7 +43,7 @@ def create_tables(con):
 
         cur.execute(
             """
-            CREATE TABLE IF NOT EXISTS challenge_data (
+            CREATE TABLE IF NOT EXISTS message_backup (
                 times_tamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 user_name TEXT,
                 message TEXT
