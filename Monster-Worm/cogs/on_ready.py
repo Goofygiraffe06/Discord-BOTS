@@ -1,12 +1,12 @@
-import logging 
+import logging
 import discord
 from discord.ext import commands
 
-class onReady(commands.Cog):
-	def __init__(self, bot):
-		self.bot = bot
+class OnReady(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
 
-	@commands.Cog.listener()
+    @commands.Cog.listener()
     async def on_ready(self):
         logging.info(f"We have logged in as {self.bot.user}")
         try:
@@ -16,4 +16,4 @@ class onReady(commands.Cog):
             logging.error(f"Error syncing commands!: {e}")
 
 async def setup(bot) -> None:
-    await bot.add_cog(onReady(bot))
+    await bot.add_cog(OnReady(bot))
