@@ -82,3 +82,25 @@ def update_config(con, key: str, value: int):
     except sqlite3.Error as e:
         logging.error(f"Error updating table config: {e}")
         return False
+
+def fetch_config(con):
+    """
+    A function which is used to return all the records and return it as dictionary,
+    if their is no config then it returns False.
+    """
+    try:
+        cur = con.cursor()
+
+        cur.execute("SELECT * FROM config")
+        row = cur.fetchone()
+        if row:
+            return {
+                "osint_bot_channel": row[1],
+                "activity_music_bot_channel": row[2],
+                "lightshot_bot_channel": row[3],
+                "nmap_bot_channel": row[4],
+                "whostared_bot_channel": row[5]
+            }
+    except sqlite3.Error as e:
+        logging.error(f"Error fetching table config: {e}")
+        return None
