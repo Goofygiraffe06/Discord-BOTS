@@ -1,5 +1,5 @@
 import logging 
-import sqlite 
+import sqlite3
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s"
