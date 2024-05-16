@@ -15,6 +15,7 @@ class OnReady(commands.Cog):
             logging.info(f"Synced {len(synced)} command(s)...")
             logging.info("Initializing Database...")
             db_init()
+            logging.info(commands.Cog.get_listeners(self))
         except Exception as e:
             logging.error(f"Error syncing commands!: {e}")
 

@@ -13,7 +13,9 @@ logging.basicConfig(
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
 logging.getLogger("flask.app").setLevel(logging.ERROR)
 
-bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+intents = discord.Intents.all()
+intents.messages = True
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 async def main():
     async with bot:
