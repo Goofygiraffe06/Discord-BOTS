@@ -27,67 +27,83 @@ class Moderation(commands.Cog):
         if not interaction.guild:
             return []
 
+        current_lower = current.lower()
+        muted_user_ids = set(load_muted_users(interaction.guild.id))  # Load muted users
+
+        # Filter members by name matching the current input, exclude bots and non-muted users
         choices = [
-            app_commands.Choice(name=user.name, value=user.name)
-            for user in interaction.guild.members
-            if current.lower() in user.name.lower() and not user.bot
+            app_commands.Choice(name=f"{member.name} ({member.id})", value=str(member.id))
+            for member in interaction.guild.members
+            if current_lower in member.name.lower() and not member.bot and member.id in muted_user_ids
         ]
         return choices
 
-    async def get_member_by_username(self, guild: discord.Guild, username: str) -> discord.Member:
-        for member in guild.members:
-            if member.name.lower() == username.lower() and not member.bot:
-                return member
-        return None
-
     @app_commands.command(name="mute", description="Mute a user in the server")
-    @app_commands.describe(username="Name of the user to mute")
-    @app_commands.autocomplete(username=autocomplete_user)
+    @app_commands.describe(user="User to mute (by username or ID)")
+    @app_commands.autocomplete(user=autocomplete_user)
     @app_commands.checks.has_permissions(manage_messages=True)
-    async def mute(self, interaction: discord.Interaction, username: str):
+    async def mute(self, interaction: discord.Interaction, user: str):
         guild = interaction.guild
-        member = await self.get_member_by_username(guild, username)
-
-        if member is None:
-            await interaction.response.send_message(f"User `{username}` does not exist in this server.", ephemeral=True)
+        try:
+            user_id = int(user)  # Convert to integer
+        except ValueError:
+            await interaction.response.send_message("Invalid user ID.", ephemeral=True)
             return
 
-        muted_usernames = load_muted_users(guild.id)
-        if username not in muted_usernames:
-            muted_usernames.append(username)
-            save_muted_users(guild.id, muted_usernames)
-            await interaction.response.send_message(f"User `{username}` has been muted in this server.", ephemeral=True)
+        member = guild.get_member(user_id)
+        if not member:
+            await interaction.response.send_message("User not found in this server.", ephemeral=True)
+            return
+
+        muted_user_ids = load_muted_users(guild.id)
+        if user_id not in muted_user_ids:
+            muted_user_ids.append(user_id)
+            save_muted_users(guild.id, muted_user_ids)
+            await interaction.response.send_message(f"User `{member.name}` ({user_id}) has been muted.", ephemeral=True)
         else:
-            await interaction.response.send_message(f"User `{username}` is already muted in this server.", ephemeral=True)
+            await interaction.response.send_message(f"User `{member.name}` ({user_id}) is already muted.", ephemeral=True)
 
     @app_commands.command(name="unmute", description="Unmute a user in the server")
-    @app_commands.describe(username="Name of the user to unmute")
-    @app_commands.autocomplete(username=autocomplete_user)
+    @app_commands.describe(user="User to unmute (by username or ID)")
+    @app_commands.autocomplete(user=autocomplete_user)
     @app_commands.checks.has_permissions(manage_messages=True)
-    async def unmute(self, interaction: discord.Interaction, username: str):
+    async def unmute(self, interaction: discord.Interaction, user: str):
         guild = interaction.guild
-        member = await self.get_member_by_username(guild, username)
-
-        if member is None:
-            await interaction.response.send_message(f"User `{username}` does not exist in this server.", ephemeral=True)
+        try:
+            user_id = int(user)  # Convert to integer
+        except ValueError:
+            await interaction.response.send_message("Invalid user ID.", ephemeral=True)
             return
 
-        muted_usernames = load_muted_users(guild.id)
-        if username in muted_usernames:
-            muted_usernames.remove(username)
-            save_muted_users(guild.id, muted_usernames)
-            await interaction.response.send_message(f"User `{username}` has been unmuted in this server.", ephemeral=True)
+        member = guild.get_member(user_id)
+        if not member:
+            await interaction.response.send_message("User not found in this server.", ephemeral=True)
+            return
+
+        muted_user_ids = load_muted_users(guild.id)
+        if user_id in muted_user_ids:
+            muted_user_ids.remove(user_id)
+            save_muted_users(guild.id, muted_user_ids)
+            await interaction.response.send_message(f"User `{member.name}` ({user_id}) has been unmuted.", ephemeral=True)
         else:
-            await interaction.response.send_message(f"User `{username}` is not muted in this server.", ephemeral=True)
+            await interaction.response.send_message(f"User `{member.name}` ({user_id}) is not muted.", ephemeral=True)
 
     @app_commands.command(name="mutelist", description="List all muted users in the server")
     @app_commands.checks.has_permissions(manage_messages=True)
     async def mutelist(self, interaction: discord.Interaction):
         guild_id = interaction.guild.id
-        muted_usernames = load_muted_users(guild_id)
+        muted_user_ids = load_muted_users(guild_id)
 
-        if muted_usernames:
-            muted_users_string = "\n".join(muted_usernames)
+        if muted_user_ids:
+            muted_users_info = []
+            for user_id in muted_user_ids:
+                member = interaction.guild.get_member(user_id)
+                if member:
+                    muted_users_info.append(f"{member.name} [{user_id}]")
+                else:
+                    muted_users_info.append(f"Unknown User [{user_id}]")
+
+            muted_users_string = "\n".join(muted_users_info)
             await interaction.response.send_message(f"Muted users in this server:\n{muted_users_string}", ephemeral=True)
         else:
             await interaction.response.send_message("No users are currently muted in this server.", ephemeral=True)
